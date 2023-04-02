@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder as BuilderContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Concerns\JoinsModels;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\MultipleRecordsFoundException;
@@ -15,7 +16,7 @@ use Illuminate\Support\Traits\Macroable;
 
 abstract class Relation implements BuilderContract
 {
-    use ForwardsCalls, Macroable {
+    use ForwardsCalls, Macroable, JoinsModels {
         Macroable::__call as macroCall;
     }
 

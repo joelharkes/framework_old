@@ -31,6 +31,7 @@ class DatabaseEloquentJoinsModelsTest extends TestCase
     {
         \Mockery::close();
     }
+
     public function testJoinMany()
     {
         $mock = \Mockery::mock(Builder::class, [$this->db->getDatabaseManager()->query()])->makePartial();
@@ -54,6 +55,47 @@ class DatabaseEloquentJoinsModelsTest extends TestCase
         $blog = new Blog();
         $query = $blog->newQuery()->joinMany(Comment::class)->toSql();
         $this->assertSame('select * from "blogs" inner join "comments" on "comments"."blog_id" = "blogs"."id"', $query);
+    }
+
+    public function testSimpleHasManyForQueryBuilder()
+    {
+        $blog = new Blog();
+        $query = $blog->newQuery()->joinMany(Comment::query())->toSql();
+        $this->assertSame('select * from "blogs" inner join "comments" on "comments"."blog_id" = "blogs"."id"', $query);
+    }
+
+
+    public function testSimpleHasManyForRelation()
+    {
+        $blog = new Blog();
+        $blog->id = 123;
+        $query = $blog->newQuery()->joinMany($blog->comments())->toSql();
+        $this->assertSame('select * from "blogs" inner join "comments" on "comments"."blog_id" = "blogs"."id"', $query);
+    }
+
+
+    public function testJoinRelation()
+    {
+        $blog = new Blog();
+        $blog->id = 123;
+        $query = $blog->newQuery()->joinRelation('comments')->toSql();
+        $this->assertSame('select * from "blogs" inner join "comments" on "comments"."blog_id" = "blogs"."id"', $query);
+    }
+
+
+    public function testJoinRelationWithAlias()
+    {
+        $blog = new Blog();
+        $blog->id = 123;
+        $query = $blog->newQuery()->joinRelation('notes', aliasAsRelations: true)->toSql();
+        $this->assertSame('select * from "blogs" inner join "comments" as "notes" on "notes"."blog_id" = "blogs"."id"', $query);
+    }
+
+    public function testJoinOneRelationWith()
+    {
+        $blog = new Blog();
+        $query = (new Comment())->newQuery()->joinRelation('blog')->toSql();
+        $this->assertSame('select * from "comments" inner join "blogs" on "blogs"."id" = "comments"."blog_id"', $query);
     }
 
     public function testSimpleHasOne()
@@ -103,8 +145,16 @@ class Blog extends Model {
     public function comments(){
         return $this->hasMany(Comment::class);
     }
+
+    public function notes(){
+        return $this->hasMany(Comment::class);
+    }
 }
-class Comment extends Model {}
+class Comment extends Model {
+    public function blog(){
+        return $this->belongsTo(Blog::class);
+    }
+}
 class User extends Model {}
 
 class DeletableComment extends Model {
